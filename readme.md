@@ -1,1 +1,1 @@
-All files for SM2AMPR is Stored here
+All ansible scrips for SM2AMPR is Stored here
