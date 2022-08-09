@@ -4,7 +4,7 @@
 
 - name: Upgrade all the things!
   hosts: all:!localhost
-  become: True
+  become: yes
 
   vars:
 
