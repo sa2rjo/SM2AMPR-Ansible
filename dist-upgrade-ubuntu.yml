@@ -1,32 +1,47 @@
 ---
-- name: dist-upgrade-ubuntu
-  hosts: all
-  become: yes
-  gather_facts: False
+- hosts:
+    all
+  gather_facts: no
+  vars:
+    verbose: false
+    log_dir: "log/dist-upgrade/{{ inventory_hostname }}"
+  pre_tasks:
+    - block:
+        - setup:
+      rescue:
+        - name: "Install required python-minimal package"
+          raw: "apt-get update && apt-get install -y --force-yes python-apt python-minimal"
+        - setup:
   tasks:
-    - name: Update apt repo and cache on all Debian/Ubuntu boxes
+    - name: Update packages
       apt:
         update_cache: yes
-        force_apt_get: yes
-        cache_valid_time: 3600
-
-    - name: Upgrade all packages on servers
-      apt:
         upgrade: dist
-        force_apt_get: yes
+        autoremove: yes
+      register: output
 
-    - name: Check if a reboot is needed on all servers
-      register: reboot_required_file
-      stat:
-        path: /var/run/reboot-required
-        get_md5: no
+    - name: Check changes
+      set_fact:
+        updated: true
+      when: not output.stdout | search("0 upgraded, 0 newly installed")
 
-    - name: Reboot the server if kernel updated
-      reboot:
-        msg: "Reboot initiated by Ansible for kernel updates"
-        connect_timeout: 5
-        reboot_timeout: 300
-        pre_reboot_delay: 0
-        post_reboot_delay: 30
-        test_command: uptime
-      when: reboot_required_file.stat.exists
+    - name: Display changes
+      debug:
+        msg: "{{ output.stdout_lines }}"
+      when: verbose or updated is defined
+
+    - block:
+      - name: "Create log directory"
+        file:
+          path: "{{ log_dir }}"
+          state: directory
+        changed_when: false
+
+      - name: "Write changes to logfile"
+        copy:
+          content: "{{ output.stdout }}"
+          dest: "{{ log_dir }}/dist-upgrade_{{ ansible_date_time.iso8601 }}.log"
+        changed_when: false
+
+      when: updated is defined
+      connection: local
