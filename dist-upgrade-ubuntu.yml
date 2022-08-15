@@ -23,14 +23,6 @@
     # If this file exists, failed upgrade will be tried again
     dist_upgrade_lockfile: '/tmp/dist-upgrade-in-progress'
 
-    # List of mail recipients
-    dist_upgrade_mail_to: [ '{{ "root@" + ansible_domain }}' ]
-
-    # Mail subject
-    dist_upgrade_mail_subject: '{{ ansible_fqdn }} has been upgraded from {{ ansible_distribution }} {{ dist_upgrade_current_release | capitalize }} to {{ ansible_distribution }} {{ dist_upgrade_new_release | capitalize }}'
-
-    # Mail contents
-    dist_upgrade_mail_body: |
       Ansible performed an unattended 'apt-get dist-upgrade' on host
           {{ ansible_fqdn }}
       Upgrade has been orchestrated by {{ ansible_env.SUDO_USER }}.
